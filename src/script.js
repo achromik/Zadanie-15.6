@@ -68,7 +68,7 @@ class Stopwatch {
     //add split time to results list
     split() {
         if(this.running) {
-            addSplitTimeToList(this.format(this.times));
+            addSplitTimeToList(this.format(this.times), resultList);
             clearInterval(this.displayTime);
             
             //display split time 
@@ -100,7 +100,7 @@ var splitButton = document.getElementById('split');
 splitButton.addEventListener('click', () => stopwatch.split());
 
 var clearResultsListButton = document.getElementById('clear');
-clearResultsListButton.addEventListener('click', () => clearResultsList());
+clearResultsListButton.addEventListener('click', () => clearResultsList(resultList));
 
 function pad0(value) {
     let result = value.toString();
@@ -110,12 +110,12 @@ function pad0(value) {
     return result;
 }
 
-function addSplitTimeToList(value) {
-    let element = document.createElement('span');
+function addSplitTimeToList(value, resultList) {
+    let element = document.createElement('li');
     element.innerText = value;
     resultList.appendChild(element);
 }
 
-function clearResultsList() {
+function clearResultsList(resultList) {
     resultList.innerHTML = '';
 }
