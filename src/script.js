@@ -1,106 +1,175 @@
-class Stopwatch {
-    constructor(display) {
-        this.running = false;
-        this.display = display;
-        this.reset();
-        this.print();
+const SPLIT_TIME_DISPLAY_INTERVAL = 300;
+const destination = document.querySelector('#root');
+
+
+
+class Counter extends React.Component {
+    render() {
+        return <div className={'stopwatch'}>{this.props.value}</div>
+    }
+}
+
+class Button extends React.Component {
+    render() {
+        return (<a href='#' className='button' id={this.props.id} onMouseDown={this.props.onClick}>{this.props.name}</a>)
+    }
+}
+
+class ResultList extends React.Component {
+    render() {   
+        //OL reversed displays list in reversed order (last split time is first on the results list) 
+        return (
+        <div className='resultList'>
+            <ol reversed={'reversed'} className={'results'}>{this.props.value}</ol>
+            <Button id={'clear'} onClick={this.props.onButtonClick} name={'Clear split times list'} />
+        </div>
+        )
+    }
+}
+
+class Stopwatch extends React.Component {
+    constructor() {
+        super();
+        this.state = {
+            running: false,
+            times: {
+                minutes: 0,
+                seconds:0,
+                miliseconds:0
+            },
+            splitTimes: []
+        }
+        this.printTime = this.format(this.state.times);
+        this.buttonStopName = 'Stop';
     }
 
-    reset() {
-        this.times = {
-            minutes: 0,
-            seconds: 0,
-            miliseconds: 0
-        };
+    render() {
+        return (
+            <div>
+                <div className={'app'}>
+                    <nav className={'controls'}>
+                        <Button id={'start'} onClick={this.start} name={'Start'}/>
+                        <Button id={'split'} onClick={this.split} name={'Split'}/>
+                        <Button id={'stop'} onClick={this.stop} name={this.buttonStopName}/>
+ 
+                    </nav>
+                    <Counter value={this.printTime} />
+                </div>
+                <ResultList value={this.printSplitTimes()} onButtonClick={this.clear} />
+            </div>
+        )
+
     }
 
-    print() {
-        this.display.innerText = this.format(this.times);
+    reset = () => {
+        let timesTemp = this.state.times;
+        timesTemp.minutes = timesTemp.seconds = timesTemp.miliseconds = 0;
+        this.setState({times:timesTemp});
     }
 
-    format(times) {
-        return `${pad0(times.minutes)}:${pad0(times.seconds)}:${pad0(Math.floor(times.miliseconds))}`;
+    printSplitTimes = () => {
+        const items = this.state.splitTimes.map( (item, id) => {
+
+            
+            return (
+                <li key={id}>{item}</li>
+            );
+        });
+        return items;
     }
 
-    start() {
-        if(!this.running) {
-            this.running = true;
+    print = (times = this.state.times) => {
+        this.printTime = this.format(times) 
+        
+    }
+
+    format = (times) => {
+        return `${pad0(times.minutes)}:${pad0(times.seconds)}.${pad0(Math.floor(times.miliseconds))}`;
+    }
+
+    start = () => {
+        // console.log(this.state.running);
+        if(!this.state.running) {
+            this.setState({running: true});
             this.watch = setInterval(() => {
                 this.step();      
             }, 10);
             this.displayTime = setInterval(() => this.print(),10);
-            stopButton.innerHTML = 'Stop';
+            this.buttonStopName = 'Stop';
         }
     }
 
-    step() {
-        if(!this.running) return;
+    step = () => {
+        if(!this.state.running) return;
         this.calculate();
-        // this.print();  
     }
 
-    calculate() {
-        this.times.miliseconds += 1;
-        if( this.times.miliseconds >= 100) {
-            this.times.seconds += 1;
-            this.times.miliseconds = 0;
+    calculate = () => {
+        let timesTemp = this.state.times;
+
+        timesTemp.miliseconds += 1;
+        if( timesTemp.miliseconds >= 100) {
+            timesTemp.seconds += 1;
+            timesTemp.miliseconds = 0;
         }
-        if(this.times.seconds >= 60) {
-            this.times.minutes += 1;
-            this.times.seconds = 0;    
+        if(timesTemp.seconds >= 60) {
+            timesTemp.minutes += 1;
+            timesTemp.seconds = 0;    
         }
+        this.setState({times: timesTemp})
     }
 
-    stop() {
+    stop = () => {
         //stop stopwatch
-        if(this.running) {
-            this.running = false;
+        if(this.state.running) {
+            this.setState({running: false});
             clearInterval(this.watch);
-            stopButton.innerHTML = 'Reset';
+            clearInterval(this.displayTime);
+            this.buttonStopName = 'Reset';
 
         //if stopwatch is stoped next click resets stopwatch    
         } else {
             this.reset();
             this.print();
+            this.buttonStopName = 'Stop';
+            
         }
+        
     }
 
     //add split time to results list
-    split() {
-        if(this.running) {
-            addSplitTimeToList(this.format(this.times), resultList);
+    split = () => {
+        if(this.state.running) {
+            let currentSplitTime = this.state.times;
+
+            this.setState({
+                splitTimes: [this.format(currentSplitTime), ...this.state.splitTimes]
+            });
+
+
             clearInterval(this.displayTime);
-            
+            clearTimeout(this.timeoutSplitTime);
             //display split time 
-            setTimeout(() => {  
-                this.displayTime = setInterval(() => {
-                    this.print()
-                }, 10);
+            this.print(currentSplitTime);
+            this.timeoutSplitTime = setTimeout(() => {  
+                this.displayTime = setInterval(() => this.print(),10);
+                
             }, SPLIT_TIME_DISPLAY_INTERVAL);
+           
         }
         else return;
     }
+
+    clear = () => {
+        this.setState({
+            splitTimes: []
+        });
+    }
 }
 
-
-const SPLIT_TIME_DISPLAY_INTERVAL = 300;
-
-
-const stopwatch = new Stopwatch(document.querySelector('.stopwatch'));
-
-const resultList = document.querySelector('.results');
-
-var startButton = document.getElementById('start');
-startButton.addEventListener('click', () => stopwatch.start());
-
-var stopButton = document.getElementById('stop');
-stopButton.addEventListener('click', () => stopwatch.stop());
-
-var splitButton = document.getElementById('split');
-splitButton.addEventListener('click', () => stopwatch.split());
-
-var clearResultsListButton = document.getElementById('clear');
-clearResultsListButton.addEventListener('click', () => clearResultsList(resultList));
+ReactDOM.render(
+    <Stopwatch/>
+    , destination);
 
 function pad0(value) {
     let result = value.toString();
@@ -108,14 +177,4 @@ function pad0(value) {
         return '0' + result;
     }
     return result;
-}
-
-function addSplitTimeToList(value, resultList) {
-    let element = document.createElement('li');
-    element.innerText = value;
-    resultList.appendChild(element);
-}
-
-function clearResultsList(resultList) {
-    resultList.innerHTML = '';
 }

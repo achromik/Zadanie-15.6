@@ -10,6 +10,7 @@ body {
     background: linear-gradient(to bottom, #2F80ED, #56CCF2); 
     flex-direction: column;
     box-sizing: border-box;
+    margin: 0;
 }
 
 .app {
@@ -67,9 +68,23 @@ a {
 }
 
 li {
-    padding-right: 45px;
-    padding-left: 5px;
+    width: 110px;
+    background: #E0E0E0;
+    text-align: center;
+    margin-right: 60px;
+    margin-left: 10px;
+    padding: 10px 0;
 }
+
+li:nth-of-type(1) {
+    border: 1px solid red;
+}
+
+li:nth-of-type(odd) {
+    background: #EEEEEE;
+}
+
+
 
 .results {
     display: flex;
